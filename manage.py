@@ -2,9 +2,14 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 # redis数据库
 from redis import StrictRedis
+
+from flask_wtf.csrf import CSRFProtect
+
 # 解决MySQL数据库兼容问题
 import pymysql
 pymysql.install_as_MySQLdb()
+
+
 
 # 自定义配置类
 class Config(object):
@@ -29,6 +34,13 @@ db = SQLAlchemy(app)
 
 # 创建redis 数据库对象
 redis_store = StrictRedis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, decode_responses=True)
+
+# CSRF 跨站请求伪造
+app.config.from_object(Config)
+CSRFProtect(app)
+
+
+
 
 @app.route('/')
 def index():
