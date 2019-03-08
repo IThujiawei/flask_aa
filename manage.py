@@ -12,8 +12,10 @@ from flask import session
 # 调整 flask_session 储存位置工具类
 from flask_session import Session
 
-
-
+# 调用 数据库块迁移 模块
+from flask_migrate import Migrate, MigrateCommand
+# 调用 创建数据库管理对象 模块
+from flask_script import Manager
 
 # 自定义配置类
 class Config(object):
@@ -66,7 +68,14 @@ CSRFProtect(app)
 #将 flask_session 储存位置从服务器 内存 调到 redis 数据库
 Session(app)
 
+# 给项目添加迁移能力
+Migrate(app, db)
 
+# 创建数据库管理对象
+manager = Manager(app)
+
+# 使用管理对象添加迁移指令
+manager.add_command("db", MigrateCommand)
 
 
 
@@ -77,3 +86,5 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    # 使用管理对象运行项目
+    manager.run()
