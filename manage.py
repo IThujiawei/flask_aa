@@ -2,12 +2,16 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 # redis数据库
 from redis import StrictRedis
-
 from flask_wtf.csrf import CSRFProtect
-
 # 解决MySQL数据库兼容问题
 import pymysql
 pymysql.install_as_MySQLdb()
+
+# 调用session类模块
+from flask import session
+# 调整 flask_session 储存位置工具类
+from flask_session import Session
+
 
 
 
@@ -25,6 +29,27 @@ class Config(object):
     # redis 数据库配置 端口
     REDIS_PORT = 6379
 
+    # ***********设置session配置**************
+    # 使用session记录设置加密字符串
+    SESSION_KEY = "asdnanasdsdnlka"
+
+    # 将session调整到 redis数据库 保存配置信息
+    SESSION_TYPE = "redis"
+
+    # 设置保存到数据库的ip ,端口 , redis数据库对象
+    SESSION_REDIS = StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+
+    # 对session_id进行加密处理
+    SESSION_USE_SIGNER = True
+
+    # 设置是否永久储存
+    SESSION_PERMANENT = True
+
+    # 设置储存有效时间(单位:秒)
+    PERMANENT_SESSION_LIFETIME = 86400
+
+
+
 # 创建APP对象
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -36,8 +61,11 @@ db = SQLAlchemy(app)
 redis_store = StrictRedis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, decode_responses=True)
 
 # CSRF 跨站请求伪造
-app.config.from_object(Config)
 CSRFProtect(app)
+
+#将 flask_session 储存位置从服务器 内存 调到 redis 数据库
+Session(app)
+
 
 
 
