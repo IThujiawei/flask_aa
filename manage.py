@@ -7,7 +7,7 @@ from flask_script import Manager
 # 调用 数据库块迁移 模块
 from flask_migrate import Migrate, MigrateCommand
 # 导入app对象
-from info import create_app
+from info import create_app, db, redis_store
 
 pymysql.install_as_MySQLdb()
 
