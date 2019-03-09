@@ -30,20 +30,20 @@ manager.add_command("db", MigrateCommand)
 
 
 
-@app.route('/')
-def index():
-
-    logging.debug("This is a debug log.")
-    logging.info("This is a info log.")
-    logging.warning("This is a warning log.")
-    logging.error("This is a error log.")
-    logging.critical("This is a critical log.")
-
-    # flask中也封装了loging模块
-    current_app.logger.debug("flask ---debug")
-
-
-    return "返回值"
+# @app.route('/')
+# def index():
+#
+#     logging.debug("This is a debug log.")
+#     logging.info("This is a info log.")
+#     logging.warning("This is a warning log.")
+#     logging.error("This is a error log.")
+#     logging.critical("This is a critical log.")
+#
+#     # flask中也封装了loging模块
+#     current_app.logger.debug("flask ---debug")
+#
+#
+#     return "返回值"
 
 
 if __name__ == '__main__':
