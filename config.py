@@ -29,7 +29,7 @@ class Config(object):
     SESSION_USE_SIGNER = True
 
     # 设置是否永久储存
-    SESSION_PERMANENT = True
+    SESSION_PERMANENT = False
 
     # 设置储存有效时间(单位:秒)
     PERMANENT_SESSION_LIFETIME = 86400
