@@ -1,5 +1,6 @@
 from redis import StrictRedis
 
+import logging
 
 # 自定义配置类
 class Config(object):
@@ -39,11 +40,16 @@ class DevelopmentConfig(Config):
     # 开启开发模式
     DEBUG = True
 
+    # 设置日志级别为:DEBUG
+    LOG_LEVEL = logging.DEBUG
 
     # 调用上线模式
 class ProductionConfig(Config):
     # 关闭调试模式
     DEBUG = False
+
+    # 设置日志级别为: WARNING
+    LOG_LEVEL = logging.WARNING
 
 
 
