@@ -7,7 +7,7 @@ class Config(object):
     # 开启DEBUG模式
     DEBUG = True
     # MySQL数据库链接配置
-    SQLALCHEMY_DATABASE_URI = "mysql://root1:123456@127.0.0.1:3303/flask_a1"
+    SQLALCHEMY_DATABASE_URI = "mysql://root:123456@127.0.0.1:3306/flask_a1"
     # MySQL关闭数据库修改跟踪操作
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -55,8 +55,8 @@ class ProductionConfig(Config):
 
 # 提供一个接口给外界使用
 config_dict = {
-    "Development" : DevelopmentConfig,
-    "Production" :ProductionConfig
+    "development" : DevelopmentConfig,
+    "production" :ProductionConfig
 
 }
 
