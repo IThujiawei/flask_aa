@@ -13,8 +13,6 @@ from config import config_dict
 import logging
 from logging.handlers import RotatingFileHandler
 
-# 蓝图模块
-from info.moduls.index import index_bp
 
 # 当app对象为空的情况，并没有真正做数据库的初始化操作
 db = SQLAlchemy()
@@ -73,6 +71,9 @@ def create_app(config_name):
 
     #将 flask_session 储存位置从服务器 内存 调到 redis 数据库
     Session(app)
+
+    # 延迟导包,解决循环导包问题
+    from info.moduls.index import index_bp
 
     # 4注册蓝图模块
     app.register_blueprint(index_bp)
