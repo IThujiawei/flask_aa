@@ -72,11 +72,15 @@ def create_app(config_name):
     #将 flask_session 储存位置从服务器 内存 调到 redis 数据库
     Session(app)
 
+    # 4注册首页蓝图模块
     # 延迟导包,解决循环导包问题
     from info.moduls.index import index_bp
-
-    # 4注册蓝图模块
     app.register_blueprint(index_bp)
+
+    # 注册图片验证码蓝图模块
+    from info.moduls.passport import passport_bp
+    app.register_blueprint(passport_bp)
+
 
     # 返回app对象
     return app
