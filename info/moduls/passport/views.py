@@ -1,9 +1,9 @@
 #   请求 终止模式 生成响应
-from flask import request, abort, make_response, current_app, jsonify
+from flask import request, abort, make_response, current_app, jsonify, session
 # 生成图片验证码&真实值
 from info.utils.captcha.captcha import captcha
-# redis数据库
-from info import redis_store
+# redis数据库 MySQL数据库
+from info import redis_store, db
 # 常量
 from info import constants
 # 验证码
@@ -16,6 +16,118 @@ import re, random
 from info.models import User
 # 发送短信验证码
 from info.lib.yuntongxun.sms import CCP
+# 检查时间
+from datetime import datetime
+
+# ******************注册用户接口 开始*********************
+"""实现需求
+请求方式 POST
+url: /passport/register 
+1 获取数据
+    1.1 mobile:手机号码， smscode: 用户填写短信验证码， password:未加密的密码
+2 校验数据
+    2.1 非空判断
+    2.2 手机号码格式判断
+3 逻辑判断
+    3.1 根据手机号码去redis数据库提取正确的短信验证码值
+        短信验证码有值：从redis数据库删除 [避免同一个验证码多次验证码] 
+        短信验证码没有值：短信验证码过期了 
+        3.2 对比`用户填写短信验证码`和正确的短信验证值是否一致
+        3.3 不相等：短信验证码填写错误
+        3.4 相等：使用User类创建实例对象，给其各个属性赋值
+        3.5 将用户对象保存到数据库
+        3.6 注册成功表示登录成功，使用session记录用户信息
+    4.返回值
+        4.1 返回注册成功
+4 返回值
+
+
+"""
+
+
+# 请求方式 POST
+# url: /passport/register
+@passport_bp.route("register", methodes=["POST"])
+def register():
+    # 数据交互方式
+    # param_dict: 参数字典
+    param_dict = request.json
+    # 获取数据
+    # 1.1 mobile:手机号码， smscode: 用户填写短信验证码， password:未加密的密码
+    mobile = param_dict.get("mobile")
+    sms_code = param_dict.get("sms_code")
+    password = param_dict.get("password")
+
+    # 2 校验数据
+    # 2.1 非空判断
+    if not all([mobile, sms_code, password]):
+        current_app.logger.error("注册参数不足")
+        return jsonify(errno=RET.PARAMERR, errmsg="注册参数不足")
+
+    # 2.2)正则判断 手机格式
+    if not re.match(r"1[3-9][0-9]{9}", mobile):
+        # 返回错误
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号码格式错误")
+    # 3 逻辑判断
+    # 3.1 根据手机号码去redis数据库提取正确的短信验证码值
+    try:
+        real_sms_code = redis_store.get("SMS_CODE_%s" % mobile)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询redis 短信验证码异常")
+
+    # 短信验证码有值：
+    if real_sms_code:
+        # 从redis数据库删除[避免同一个验证码多次验证码]
+        redis_store.delete("SMS_CODE_%s" % mobile)
+
+    # 短信验证码没有值：
+    else:
+        # 短信验证码过期了
+        return jsonify(errno=RET.NODATA, errmsg="短信验证码过期")
+
+    # 3.2 对比`用户填写短信验证码`和正确的短信验证值是否一致
+    if sms_code != real_sms_code:
+        # 3.3 不相等：短信验证码填写错误
+        return jsonify(errno=RET.DATAERR, errmsg="短信验证码错误")
+
+    # 3.4 相等：使用User类创建实例对象，给其各个属性赋值
+    user = User()
+    # 昵称
+    user_nick_name = mobile
+    # 手机号码
+    user.mobile = mobile
+
+    # TODO:密码加密
+
+    # 记录用户最后登陆时间
+    # datetime.now() 当前时间
+    user.last_login = datetime.now()
+
+    # 3.5 将用户对象保存到数据库
+    try:
+        # add增加
+        db.session.add(user)
+        # commit提交
+        db.session.commit()
+    except Ellipsis as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="保存用户异常")
+    # 3.6 注册成功表示登录成功，使用session记录用户信息
+    session["user_id"] = user.id
+    session["nick_name"] = user_nick_name
+    session["mobile"] = user.mobile
+    # 4.返回值
+    # 4.1 返回注册成功
+    return jsonify(errno=RET.OK, errmsg="注册成功")
+
+
+# 4 返回值
+
+
+# ******************注册用户接口 结束********************
+
 
 # """""""""""""""""""""""""""短信验证码接口开始"""""""""""""""""""""""
 
@@ -121,7 +233,7 @@ def send_sms_code():
     # 不知六位后面补0 000001
     real_sms_code = "%06d" % real_sms_code
 
-    print("短信验证码",real_sms_code)
+    print("短信验证码", real_sms_code)
 
     # 3.4.2 调用CPP对象的send_template_sms发送短信验证码
 
@@ -139,17 +251,14 @@ def send_sms_code():
     if result == -1:
         return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
 
-
-
     # 3.4.4 发送短信验证码成功：使用redis数据库保存正确的短信验证码值
     redis_store.setex("SMS_CODE_%s" % mobile, constants.SMS_CODE_REDIS_EXPIRES, real_sms_code)
 
     # 4.1)返回短信验证码发送成功  OK=0
     return jsonify(errno=RET.OK, errmsg="发送成功")
 
+
 # """""""""""""""""""""""""""短信验证码结束"""""""""""""""""""""""
-
-
 
 
 # """""""""""""""""""""图片验证码后端接口""""""""""""""""""""""""""
@@ -191,7 +300,7 @@ def get_image_code():
     参数2：有效时长，: constants.IMAGE_CODE_REDIS_EXPIRES
     参数3：redis_store 数据库存储 的真实值: real_image_code
     """
-    print("图片验证码",real_image_code )
+    print("图片验证码", real_image_code)
     redis_store.setex("Image_Code_%s" % code_id, constants.IMAGE_CODE_REDIS_EXPIRES, real_image_code)
 
     # 4.1 直接返回图片数据，不能兼容所有浏览器
