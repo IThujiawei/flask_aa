@@ -19,7 +19,8 @@ from info.lib.yuntongxun.sms import CCP
 
 # """""""""""""""""""""""""""短信验证码接口开始"""""""""""""""""""""""
 
-"""
+"""原理
+
 请求方式:"post"
 请求url:/passport/sms_code
 请求&返回data的格式: Json
@@ -50,12 +51,14 @@ TODO:判断手机号码是否以注册
 """
 
 
-# 参数通过请求体携带{mobile:13800138000, images_code:12345}
+# 请求url:/passport/sms_code 参数通过请求体携带{mobile:13800138000, images_code:12345}
 @passport_bp.route("/sms_code", methods=["POST"])
 def send_sms_code():
     # 1获取参数.
     # 1.1)用户账号mobile号码, 用户填写真实图片验证码: image_code, 编号UUID:images_code_id
     param_data = request.json
+    print(param_data)
+
     mobile = param_data.get("mobile")
     image_code = param_data.get("image_code")
     image_code_id = param_data.get("image_code_id")
@@ -68,7 +71,7 @@ def send_sms_code():
         # 返回错误信息
         # error_data={"errno":RET.DATAERR, "errmsg": "参数不足"}
         # return jsonify(error_data)
-        return jsonify(errno=RET.PARAMERR, errmsg="参数不足")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数不足1")
 
     # 2.2)正则判断 手机格式
     if not re.match(r"1[3-9][0-9]{9}", mobile):
@@ -118,11 +121,14 @@ def send_sms_code():
     # 不知六位后面补0 000001
     real_sms_code = "%06d" % real_sms_code
 
+    print("短信验证码",real_sms_code)
+
     # 3.4.2 调用CPP对象的send_template_sms发送短信验证码
 
     # 参数1：发送到那个手机号码 mobile
     # 参数2：发送短信的内容,有效时间  real_sms_code, 5
     # 参数3： 短信模板id   1
+
     try:
         result = CCP().send_template_sms(mobile, {real_sms_code, 5}, 1)
     except Exception as e:
@@ -133,6 +139,8 @@ def send_sms_code():
     if result == -1:
         return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
 
+
+
     # 3.4.4 发送短信验证码成功：使用redis数据库保存正确的短信验证码值
     redis_store.setex("SMS_CODE_%s" % mobile, constants.SMS_CODE_REDIS_EXPIRES, real_sms_code)
 
@@ -140,6 +148,8 @@ def send_sms_code():
     return jsonify(errno=RET.OK, errmsg="发送成功")
 
 # """""""""""""""""""""""""""短信验证码结束"""""""""""""""""""""""
+
+
 
 
 # """""""""""""""""""""图片验证码后端接口""""""""""""""""""""""""""
@@ -181,6 +191,7 @@ def get_image_code():
     参数2：有效时长，: constants.IMAGE_CODE_REDIS_EXPIRES
     参数3：redis_store 数据库存储 的真实值: real_image_code
     """
+    print("图片验证码",real_image_code )
     redis_store.setex("Image_Code_%s" % code_id, constants.IMAGE_CODE_REDIS_EXPIRES, real_image_code)
 
     # 4.1 直接返回图片数据，不能兼容所有浏览器

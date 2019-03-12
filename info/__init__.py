@@ -67,7 +67,7 @@ def create_app(config_name):
     redis_store = StrictRedis(host=config_class.REDIS_HOST, port=config_class.REDIS_PORT, decode_responses=True)
 
     # CSRF 跨站请求伪造
-    CSRFProtect(app)
+    # CSRFProtect(app)
 
     #将 flask_session 储存位置从服务器 内存 调到 redis 数据库
     Session(app)
