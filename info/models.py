@@ -65,6 +65,40 @@ class User(BaseModel, db.Model):
     # news.user: 查询当前新闻发布的作者
     news_list = db.relationship('News', backref='user', lazy='dynamic')
 
+    # 密码加密
+    def set_password_hash(self, password):
+        # 对未加密的密码加密处理
+        password_hash = generate_password_hash(password)
+        # 将密码赋值给 password_hash
+        self.password_hash = password_hash
+
+        # props 代码块
+
+        # 属性的getter方法，获取这个属性的时候就会触发该方法
+        # property : 属性 性质
+        @property
+        def password(self):
+            # 不应许获取密码
+            raise ArithmeticError("不允许获取密码")
+
+
+        # 属性的setter方法，给其赋值的时候会触发set方法
+        @password.setter
+        def password(self, value):
+            # 将密码进行加密处理
+            password_hash = generate_password_hash(value)
+            # 将加密后的密码给password_hash赋值
+            self.password_hash = password_hash
+
+
+
+
+
+
+
+
+
+
     def to_dict(self):
         resp_dict = {
             "id": self.id,
@@ -108,6 +142,9 @@ class News(BaseModel, db.Model):
     # 当前新闻的所有评论
     # news.comments: 查询当前新闻的评论列表数据
     comments = db.relationship("Comment", lazy="dynamic")
+
+
+
 
     def to_review_dict(self):
         resp_dict = {

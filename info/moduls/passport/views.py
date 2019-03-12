@@ -99,6 +99,7 @@ def register():
     user.mobile = mobile
 
     # TODO:密码加密
+    user.password_hash = password
 
     # 记录用户最后登陆时间
     # datetime.now() 当前时间
@@ -121,9 +122,6 @@ def register():
     # 4.返回值
     # 4.1 返回注册成功
     return jsonify(errno=RET.OK, errmsg="注册成功")
-
-
-# 4 返回值
 
 
 # ******************注册用户接口 结束********************
