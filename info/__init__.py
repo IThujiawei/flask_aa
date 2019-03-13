@@ -11,6 +11,7 @@ from config import config_dict
 
 # 调用日志模块
 import logging
+# 日志记录器
 from logging.handlers import RotatingFileHandler
 
 
@@ -70,7 +71,7 @@ def create_app(config_name):
     # CSRFProtect(app)
 
     #将 flask_session 储存位置从服务器 内存 调到 redis 数据库
-    Session(app)
+    Session(app)   # 这是一个工具类
 
     # 4注册首页蓝图模块
     # 延迟导包,解决循环导包问题

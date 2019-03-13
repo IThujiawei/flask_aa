@@ -65,7 +65,7 @@ class User(BaseModel, db.Model):
     # news.user: 查询当前新闻发布的作者
     news_list = db.relationship('News', backref='user', lazy='dynamic')
 
-    # 密码加密
+    # ****************setter方法密码加密***********
     def set_password_hash(self, password):
         # 对未加密的密码加密处理
         password_hash = generate_password_hash(password)
