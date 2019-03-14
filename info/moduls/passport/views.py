@@ -47,7 +47,7 @@ url: /passport/register
 
 # 请求方式 POST
 # url: /passport/register
-@passport_bp.route("register", methodes=["POST"])
+@passport_bp.route("/register", methods=["POST"])
 def register():
     # 数据交互方式
     # param_dict: 参数字典
@@ -65,7 +65,7 @@ def register():
         return jsonify(errno=RET.PARAMERR, errmsg="注册参数不足")
 
     # 2.2)正则判断 手机格式
-    if not re.match(r"1[3-9][0-9]{9}", mobile):
+    if not re.match(r"1[3578][0-9]{9}", mobile):
         # 返回错误
         return jsonify(errno=RET.PARAMERR, errmsg="手机号码格式错误")
     # 3 逻辑判断
@@ -94,12 +94,13 @@ def register():
     # 3.4 相等：使用User类创建实例对象，给其各个属性赋值
     user = User()
     # 昵称
-    user_nick_name = mobile
+    user.nick_name = mobile
     # 手机号码
     user.mobile = mobile
 
     # TODO:密码加密
-    user.password_hash = password
+    # user.set_password_hash = password
+    user.password = password
 
     # 记录用户最后登陆时间
     # datetime.now() 当前时间
@@ -111,13 +112,16 @@ def register():
         db.session.add(user)
         # commit提交
         db.session.commit()
-    except Ellipsis as e:
+    except Exception as e:
+        # 记录异常
         current_app.logger.error(e)
+        # 数据库回滚
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg="保存用户异常")
+
+        return jsonify(errno=RET.DBERR, errmsg="保存用户异常11111")
     # 3.6 注册成功表示登录成功，使用session记录用户信息
     session["user_id"] = user.id
-    session["nick_name"] = user_nick_name
+    session["nick_name"] = user.nick_name
     session["mobile"] = user.mobile
     # 4.返回值
     # 4.1 返回注册成功
@@ -141,7 +145,7 @@ def register():
 2校验参数.
     2.1)非空判断, mobile,image_code, images_code_id是否为空.
     2.2)正则判断 手机格式
-    
+
 3逻辑处理.
     3.1)根据UUID 取redis数据库图片验证码的真实值.
         3.1.1)redis数据库 图片验证码真实值储在, 将其值从redis数据库删除(防止他人那同一个验证码来验证)
@@ -154,7 +158,7 @@ TODO:判断手机号码是否以注册
     3.4)图片验证码相等,生成六位数短信验证码,调用第三方接口发送短信验证码
         3.4.1)发送验证码失败:告知前端
     3.5) 将6位数验证码储存到redis数据库 设置有效时间.
-     
+
 4返回值.
 
     4.1)返回短信验证码发送成功  OK=0
@@ -233,12 +237,12 @@ def send_sms_code():
 
     print("短信验证码", real_sms_code)
 
-    # 3.4.2 调用CPP对象的send_template_sms发送短信验证码
+    # """"""""""""""""第三方发送短信验证码开始""""""""""""""""""""
 
+    # 3.4.2 调用CPP对象的send_template_sms发送短信验证码
     # 参数1：发送到那个手机号码 mobile
     # 参数2：发送短信的内容,有效时间  real_sms_code, 5
     # 参数3： 短信模板id   1
-
     try:
         result = CCP().send_template_sms(mobile, {real_sms_code, 5}, 1)
     except Exception as e:
@@ -249,14 +253,15 @@ def send_sms_code():
     if result == -1:
         return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
 
+    # """"""""""""""""""""""第三方发送短信验证码结束""""""""""""""
+
     # 3.4.4 发送短信验证码成功：使用redis数据库保存正确的短信验证码值
     redis_store.setex("SMS_CODE_%s" % mobile, constants.SMS_CODE_REDIS_EXPIRES, real_sms_code)
 
     # 4.1)返回短信验证码发送成功  OK=0
     return jsonify(errno=RET.OK, errmsg="发送成功")
 
-
-# """""""""""""""""""""""""""短信验证码结束"""""""""""""""""""""""
+    # """""""""""""""""""""""""""短信验证码结束"""""""""""""""""""""""
 
 
 # """""""""""""""""""""图片验证码后端接口""""""""""""""""""""""""""
