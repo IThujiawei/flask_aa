@@ -44,7 +44,7 @@ from datetime import datetime
 """
 
 
-@passport_bp.route("/login", methods=["POST"])
+@passport_bp.route('/login', methods=["POST"])
 def login():
     # 1获取数据设置数据格式
     param_data = request.json
