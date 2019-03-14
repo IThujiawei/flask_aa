@@ -65,6 +65,14 @@ class User(BaseModel, db.Model):
     # news.user: 查询当前新闻发布的作者
     news_list = db.relationship('News', backref='user', lazy='dynamic')
 
+
+    # check_password_hash: 检验 密码 哈希
+    def check_password(self, password):
+        # 将未加密的密码按照相同的加密算法，再次加密，然后比较，返回一个BOOL值
+        return check_password_hash(self.password_hash, password)
+
+
+
     """注册密码加密"""
     # 密码加密处理
     def set_password_hash(self, password):

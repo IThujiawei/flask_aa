@@ -19,6 +19,92 @@ from info.lib.yuntongxun.sms import CCP
 # 检查时间
 from datetime import datetime
 
+# **********登陆接口设置*************
+# URL：/passport/login参数通过请求体携带: {"mobile": 13800138000, "password": 123456 }
+# 请求方式：POST
+# 传入参数：JSON格式
+
+"""
+1获取数据
+    1.mobile: 用户手机号码 , password: 未加密的用户密码    
+2校验参数
+    1非空判断
+    2正则判断号码
+3逻辑处理
+    1根据前端输入的手机号码判断用户是否存在
+    2不存在,提示注册
+    3存在,根据用户对象,校验密码
+    4密码错误,提示用户或密码错误
+    5记录登陆最后登陆时间[将修改操作保存到数据库]
+    6使用session记录用户信息
+
+4返回数据
+    登陆成功
+
+"""
+
+
+@passport_bp.route("/login", methods=["POST"])
+def login():
+    # 1获取数据设置数据格式
+    param_data = request.json
+    # 1.mobile: 用户手机号码 , password: 未加密的用户密码
+    mobile = param_data.get("mobile")
+    password = param_data.get("password")
+
+    # 2校验参数
+    # 1非空判断
+    if not all([mobile, password]):
+        current_app.logger.error("参数不足")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数不足")
+
+    # 2正则判断号码
+    if not re.match(r"1[3-9][0-9]{9}", mobile):
+        # 返回错误
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号码格式错误")
+
+    # 3逻辑处理
+    # 1根据前端输入的手机号码判断用户是否存在
+    try:
+        user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询注册用户异常")
+
+    # 2不存在,提示注册
+    if not user:
+        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
+    # 3存在,根据用户对象,校验密码
+    if user.check_password(password) is False:
+        # 4密码错误,提示用户或密码错误
+        return jsonify(errno=RET.DATAERR, errmsg="密码密码错误")
+    # 5记录登陆最后登陆时间
+    # 注意配置数据库字段：SQLALCHEMY_COMMIT_ON_TEARDOWN = True 自动提交数据db.session.commit()
+    user.last_login = datetime.now()
+    # [将修改操作保存到数据库]
+
+    try:
+        db.session.commit()
+
+    except Exception as e:
+        current_app.logger.error(e)
+        # 数据回滚你
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="提交用户数据库错误")
+
+    # 6使用session记录用户信息
+    session["user_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = user.nick_name
+
+    # 4返回数据
+    # 登陆成功
+    return jsonify(errno=RET.OK, errmsg="登陆成功")
+
+
+# **********登陆接口结束*************
+
+
 # ******************注册用户接口 开始*********************
 """实现需求
 请求方式 POST

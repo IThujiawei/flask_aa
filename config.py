@@ -8,6 +8,10 @@ class Config(object):
     DEBUG = True
     # MySQL数据库链接配置
     SQLALCHEMY_DATABASE_URI = "mysql://root:123456@127.0.0.1:3306/flask_a1"
+
+    # 当db.session关闭的时候，自动提交数据， 相当于：db.session.commit()
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+
     # MySQL关闭数据库修改跟踪操作
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
