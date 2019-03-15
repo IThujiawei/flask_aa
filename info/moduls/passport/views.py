@@ -329,15 +329,16 @@ def send_sms_code():
     # 参数1：发送到那个手机号码 mobile
     # 参数2：发送短信的内容,有效时间  real_sms_code, 5
     # 参数3： 短信模板id   1
-    try:
-        result = CCP().send_template_sms(mobile, {real_sms_code, 5}, 1)
-    except Exception as e:
-        current_app.logger.error(e)
 
-        return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
-    # 发送失败告诉 前端
-    if result == -1:
-        return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
+    # try:
+    #     result = CCP().send_template_sms(mobile, {real_sms_code, 5}, 1)
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #
+    #     return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
+    # # 发送失败告诉 前端
+    # if result == -1:
+    #     return jsonify(errno=RET.THIRDERR, errmsg="发送短信验证码异常")
 
     # """"""""""""""""""""""第三方发送短信验证码结束""""""""""""""
 

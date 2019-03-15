@@ -2,6 +2,7 @@ from redis import StrictRedis
 
 import logging
 
+
 # 自定义配置类
 class Config(object):
     # 开启DEBUG模式
@@ -22,7 +23,7 @@ class Config(object):
 
     # ***********设置session配置**************
     # 使用session记录设置加密字符串
-    SESSION_KEY = "asdnanasdsdnlka"
+    SECRET_KEY  = "asdnanasdsdnlka"
 
     # 将session调整到 redis数据库 保存配置信息
     SESSION_TYPE = "redis"
