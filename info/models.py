@@ -97,6 +97,8 @@ class User(BaseModel, db.Model):
         # 2.将加密后的密码给password_hash赋值
         self.password_hash = password_hash
 
+    # 将对象转换成字典
+    # 好处隐藏数据库字段,提高安全性
 
     def to_dict(self):
         resp_dict = {
